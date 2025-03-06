@@ -1,6 +1,9 @@
 source_pcap_file_path = "../data/gmeet2Members.pcapng"
+#source_pcap_file_path = "../../data/gmeet2Members.pcapng"
 output_flows_file_path = "../results/flows.csv"
+#output_flows_file_path = "../../results/flows.csv"
 output_packets_file_path = "../results/packets.csv"
+#output_packets_file_path = "../../results/packets.csv"
 truncate_length = 100
 
 

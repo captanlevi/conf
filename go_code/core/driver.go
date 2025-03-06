@@ -2,6 +2,7 @@ package core
 
 import (
 	"conf/p_filter/commons"
+	"fmt"
 	"log"
 	"time"
 
@@ -24,11 +25,13 @@ func Drive(pcap_file_path string, flow_save_path string, packets_save_path strin
 	var last_timestamp time.Time
 	for packet := range packetSource.Packets() {
 		ProcessPacket(&packet, &mp)
-		if index%100000 == 0 {
+		if index%500000 == 0 {
+			fmt.Println("Cleaning up")
 			// Removing ended connections, and moving ended media connections to final_flows
 			CleanUp(packet.Metadata().Timestamp, &mp, false, &final_flows)
+			fmt.Println("map size ", len(mp))
 		}
-		if len(final_flows) > 500000 {
+		if len(final_flows) > 1000 {
 			// Saving flows
 			flow_id = Save(&final_flows, flow_id, packets_save_path, flow_save_path)
 		}
