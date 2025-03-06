@@ -33,6 +33,7 @@ func Drive(pcap_file_path string, flow_save_path string, packets_save_path strin
 		}
 		if len(final_flows) > 1000 {
 			// Saving flows
+			fmt.Println("Saving flows")
 			flow_id = Save(&final_flows, flow_id, packets_save_path, flow_save_path)
 		}
 
