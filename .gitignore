@@ -2,3 +2,8 @@
 /graphs
 *.pcap
 *pcapng
+/UNSW
+*.vscode
+*pyc
+# Ignore all CSV files
+*.csv

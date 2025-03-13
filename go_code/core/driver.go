@@ -29,7 +29,8 @@ func Drive(pcap_file_path string, flow_save_path string, packets_save_path strin
 			fmt.Println("Cleaning up")
 			// Removing ended connections, and moving ended media connections to final_flows
 			CleanUp(packet.Metadata().Timestamp, &mp, false, &final_flows)
-			fmt.Println("map size ", len(mp))
+			fmt.Println("map size - ", len(mp))
+			fmt.Println("flows size - ", len(final_flows))
 		}
 		if len(final_flows) > 1000 {
 			// Saving flows
