@@ -1,6 +1,12 @@
 from ..utils.commons import downSampleArray
 import numpy as np
 from .flowConfig import FlowConfig
+from enum import Enum
+
+"""
+Values in representation should be normalized 
+Or later handled in the dataset section.
+"""
 
 class FlowRepresentation:
     really_small_number = 1e-6
@@ -219,3 +225,64 @@ class TimeslotRepresentation:
                                   , down_packets= np.array(data["down_packets"]), class_type= data["class_type"] if "class_type" in data else "__unknown",
                                   flow_config= FlowConfig(**data["flow_config"]), timeslots_since_last= np.array(data["timeslots_since_last"])
                                   )
+
+
+
+
+class MediaStreamRepresentation:
+
+    class PacketType(Enum):
+        DTLS = 0
+        RTP = 1
+        RTCP = 2
+        STUN = 3
+        UNK = 4
+
+    def __getFeatureFromPacketType(self,packet_type : PacketType):
+        features = [0]*len(MediaStreamRepresentation.PacketType)
+        features[packet_type.value] = 1
+        return features
+
+      
+    def __init__(self,lengths,directions,inter_arrival_times,
+                 class_type,packet_types : list[PacketType],provider_type = None) -> None:
+        assert len(lengths) == len(directions) == len(inter_arrival_times) == len(packet_types)
+        self.lengths = lengths
+        self.directions = directions
+        self.inter_arrival_times = inter_arrival_times
+        self.class_type = class_type
+        self.provider_type = provider_type
+        self.packet_types = packet_types
+
+    
+    def __getitem__(self, idx):
+        return self.lengths[idx],self.directions[idx],self.inter_arrival_times[idx],self.packet_types[idx]
+    
+
+    def ser(self):
+        return dict(
+            lengths = self.lengths,
+            directions = self.directions,
+            inter_arrival_times = self.inter_arrival_times,
+            class_type = self.class_type,
+            provider = self.provider_type,
+            packet_types = [x.value for x in self.packet_types]
+        )
+
+    @staticmethod
+    def deSer(dct):
+        return MediaStreamRepresentation(lengths = dct["lengths"],
+        directions = dct["directions"],
+        inter_arrival_times = dct["inter_arrival_times"],
+        class_type = dct["class_type"], provider_type= None if "provider_type" not in dct else dct["provider_type"],
+        packet_types = [MediaStreamRepresentation.PacketType(x) for x in dct["packet_types"]]
+        )
+    
+
+    def getSubFlow(self,start_index,length):
+        end_index = start_index + length
+        lengths,directions,interarrival_times,packet_types = self[start_index:end_index]
+        return MediaStreamRepresentation(lengths= lengths.copy(),directions= directions.copy(),inter_arrival_times= interarrival_times.copy(), class_type= self.class_type,packet_types= packet_types.copy())
+    
+    def __len__(self):
+        return len(self.lengths)

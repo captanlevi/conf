@@ -1,5 +1,5 @@
-from .flowUtils.utils import readTrainTestOODFlows
-from .flowUtils.flowDatasets import PacketFlowDataset,DDQNActivityDataset
+from .flowUtils.dataGetterV2 import readTrainTestOODFlows
+from .flowUtils.flowDatasets import PacketFlowDataset,DDQNActivityDataset,MediaFlowDataset
 from .earlyClassification.DQL.core import Rewarder
 from .earlyClassification.DQL.memoryFiller import MemoryFiller
 from .earlyClassification.DQL.datasets import MemoryDataset
@@ -79,13 +79,24 @@ class Trainer:
 
     def getDatasets(self,train_packet_flows,test_packet_flows,ood_packet_flows, train_timeslot_flows,test_timeslot_flows,ood_timeslot_flows):
         truncate_length = self.configs["data_config"]["truncate_length"]
-        if self.configs["data_config"]["data_type"] == "packet_representation":
-            train_dataset = PacketFlowDataset(flows= train_packet_flows,label_to_index= None,aug= self.configs["dataset_config"]["aug"], truncate_length= truncate_length)
-            test_dataset = PacketFlowDataset(flows= test_packet_flows,label_to_index= train_dataset.label_to_index, truncate_length= truncate_length)
-            ood_dataset = PacketFlowDataset(flows= ood_packet_flows, label_to_index= None, truncate_length= truncate_length) if (ood_packet_flows != None and len(ood_packet_flows) != 0) else None
+        if self.configs["data_config"]["data_type"] == "media_representation":
+            train_dataset = MediaFlowDataset(flows= train_packet_flows,label_to_index= None,aug= self.configs["dataset_config"]["aug"], truncate_length= truncate_length)
+            test_dataset = MediaFlowDataset(flows= test_packet_flows,label_to_index= train_dataset.label_to_index, truncate_length= truncate_length)
+            ood_dataset = MediaFlowDataset(flows= ood_packet_flows, label_to_index= None, truncate_length= truncate_length) if (ood_packet_flows != None and len(ood_packet_flows) != 0) else None
             
+            train_fixed_length_dataset = MediaFlowDataset(flows= train_packet_flows, label_to_index= None, aug= self.configs["dataset_config"]["aug"], fixed_length= truncate_length)
+            test_fixed_length_dataset = MediaFlowDataset(flows= test_packet_flows, label_to_index= train_fixed_length_dataset.label_to_index, aug= None, fixed_length= truncate_length)
+       
+        elif self.configs["data_config"]["data_type"] == "packet_representation":
+            train_dataset = PacketFlowDataset(flows= train_packet_flows,label_to_index= None,aug= self.configs["dataset_config"]["aug"])
+            test_dataset = PacketFlowDataset(flows= test_packet_flows,label_to_index= train_dataset.label_to_index)
+            ood_dataset = PacketFlowDataset(flows= ood_packet_flows, label_to_index= None) if (ood_packet_flows != None and len(ood_packet_flows) != 0) else None
+
             train_fixed_length_dataset = PacketFlowDataset(flows= train_packet_flows, label_to_index= None, aug= self.configs["dataset_config"]["aug"], fixed_length= truncate_length)
             test_fixed_length_dataset = PacketFlowDataset(flows= test_packet_flows, label_to_index= train_fixed_length_dataset.label_to_index, aug= None, fixed_length= truncate_length)
+
+            
+       
         else:
             assert False, "Time interval not supported in this mode"
             train_dataset = DDQNActivityDataset(flows= train_timeslot_flows,label_to_index= None, aug= self.configs["dataset_config"]["aug"])
@@ -122,6 +133,7 @@ class Trainer:
 
         train_packet_flows,test_packet_flows,ood_packet_flows, train_timeslot_flows,test_timeslot_flows,ood_timeslot_flows = \
         readTrainTestOODFlows(base_path= base_dir_path, dataset_name= self.configs["data_config"]["dataset_name"])
+
 
         return dict(train_packet_flows = train_packet_flows,
                     test_packet_flows= test_packet_flows,ood_packet_flows = ood_packet_flows,

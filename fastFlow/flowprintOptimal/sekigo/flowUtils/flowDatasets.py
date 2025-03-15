@@ -1,5 +1,5 @@
 from typing import List
-from ..core.flowRepresentation import FlowRepresentation, TimeslotRepresentation, PacketFlowRepressentation
+from ..core.flowRepresentation import FlowRepresentation, TimeslotRepresentation, PacketFlowRepressentation, MediaStreamRepresentation
 import datetime
 from torch.utils.data import Dataset
 from .commons import getActivityArrayFromFlow, maxNormalizeFlow , getActivityArrayFromTimeslotRep
@@ -181,7 +181,17 @@ class PacketFlowDataset(Dataset):
 
 
 
+class MediaFlowDataset(PacketFlowDataset):
+    def __init__(self, flows, label_to_index, aug=None, fixed_length=None, truncate_length=15):
+        super().__init__(flows, label_to_index, aug, fixed_length, truncate_length)
 
+    def getDataItem(self,flow : MediaStreamRepresentation,aug):
+        normalized_packet_types = [x.value/len(MediaStreamRepresentation.PacketType) for x in flow.packet_types]
+        data = np.array([flow.lengths,flow.inter_arrival_times,flow.directions,normalized_packet_types]).T
+        return self._augmentData(data= data, aug_lims= aug) if aug != None else data
+       
+
+    
 
 
 
